@@ -88,6 +88,8 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "seopartnerhub.users",
+    "seopartnerhub.fake_db",
+    "seopartnerhub.n8n",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -390,8 +392,6 @@ REST_FRAMEWORK = {
 # Cover both DRF endpoints and allauth headless browser endpoints so the
 # starter-kit frontend can talk to either via Next rewrites or directly.
 CORS_URLS_REGEX = r"^/(api|_allauth)/.*$"
-
-# By Default swagger ui is available only to admin user(s). You can change permission classes to change that
 # See more configuration options at https://drf-spectacular.readthedocs.io/en/latest/settings.html#settings
 SPECTACULAR_SETTINGS = {
     "TITLE": "SEOPartnerHub API",
@@ -402,3 +402,22 @@ SPECTACULAR_SETTINGS = {
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
+
+# n8n integration
+# ------------------------------------------------------------------------------
+# Outbound webhook URL is composed as N8N_WEBHOOK_BASE_URL + Process.webhook_path.
+# Inbound completion callbacks are HMAC-SHA256 signed with N8N_CALLBACK_HMAC_SECRET.
+N8N_BASE_URL = env("N8N_BASE_URL", default="http://n8n:5678")
+N8N_WEBHOOK_BASE_URL = env(
+    "N8N_WEBHOOK_BASE_URL",
+    default="http://n8n:5678/webhook",
+)
+N8N_CALLBACK_HMAC_SECRET = env(
+    "N8N_CALLBACK_HMAC_SECRET",
+    default="dev-only-callback-secret-change-me",
+)
+N8N_REQUEST_TIMEOUT_SECONDS = env.int("N8N_REQUEST_TIMEOUT_SECONDS", default=10)
+N8N_PROCESS_RUN_TIMEOUT_SECONDS = env.int(
+    "N8N_PROCESS_RUN_TIMEOUT_SECONDS",
+    default=900,
+)

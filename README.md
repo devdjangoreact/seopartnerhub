@@ -26,8 +26,30 @@ Local URLs:
 - Full-version showcase (component donor, backend-free): http://127.0.0.1:3001
 - Mailpit (email viewer): http://127.0.0.1:8025
 - Flower (Celery): http://127.0.0.1:5555
+- n8n editor: http://127.0.0.1:5678
 
 See `readme_start.md` for the developer quick start and `readme_spec.md` for the project constitution.
+
+## n8n process management
+
+The `seopartnerhub.n8n` Django app exposes authenticated DRF endpoints to manage
+n8n-driven automation processes (currently the canonical Telegram-post sample):
+
+- `GET /api/n8n/processes/` and `GET /api/n8n/processes/{id}/`
+- `PATCH /api/n8n/processes/{id}/` (typed validation per `ProcessKind` via Pydantic)
+- `POST /api/n8n/processes/{id}/trigger/` (manual run, also available via Django admin action)
+- `GET /api/n8n/processes/{id}/runs/` and `GET /api/n8n/runs/{run_id}/` for run history
+- `POST /api/n8n/callbacks/runs/` for HMAC-SHA256 signed completion callbacks from n8n
+
+Required Django settings (envs read in `config/settings/base.py`):
+
+| Key | Default | Purpose |
+| --- | --- | --- |
+| `N8N_BASE_URL` | `http://n8n:5678` | n8n service base URL |
+| `N8N_WEBHOOK_BASE_URL` | `http://n8n:5678/webhook` | Joined with `Process.webhook_path` to trigger workflows |
+| `N8N_CALLBACK_HMAC_SECRET` | dev-only | Shared secret for inbound `X-Signature` callbacks |
+| `N8N_REQUEST_TIMEOUT_SECONDS` | `10` | HTTPX timeout for outbound triggers |
+| `N8N_PROCESS_RUN_TIMEOUT_SECONDS` | `900` | Sweep threshold for stale `running` runs |
 
 ## Frontend integration
 

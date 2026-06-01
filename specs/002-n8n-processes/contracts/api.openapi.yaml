@@ -1,0 +1,361 @@
+openapi: 3.1.0
+info:
+  title: SEOPartnerHub n8n Processes API
+  version: 0.1.0
+servers:
+  - url: /api
+paths:
+  /n8n/processes/:
+    get:
+      operationId: n8n_processes_list
+      summary: List n8n processes
+      security:
+        - sessionAuth: []
+        - tokenAuth: []
+      responses:
+        "200":
+          description: Process list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProcessListItem"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /n8n/processes/{id}/:
+    get:
+      operationId: n8n_processes_retrieve
+      summary: Retrieve one n8n process
+      security:
+        - sessionAuth: []
+        - tokenAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProcessId"
+      responses:
+        "200":
+          description: Process detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: n8n_processes_partial_update
+      summary: Update process settings and mutable metadata
+      security:
+        - sessionAuth: []
+        - tokenAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProcessId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessUpdateRequest"
+      responses:
+        "200":
+          description: Updated process
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessDetail"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /n8n/processes/{id}/trigger/:
+    post:
+      operationId: n8n_processes_trigger
+      summary: Manually trigger a process
+      security:
+        - sessionAuth: []
+        - tokenAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProcessId"
+      responses:
+        "202":
+          description: Run created and trigger accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessRun"
+        "400":
+          description: Process cannot be triggered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /n8n/processes/{id}/runs/:
+    get:
+      operationId: n8n_processes_runs_list
+      summary: List recent runs for one process
+      security:
+        - sessionAuth: []
+        - tokenAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProcessId"
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Paginated process runs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedProcessRunList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /n8n/runs/{id}/:
+    get:
+      operationId: n8n_runs_retrieve
+      summary: Retrieve one process run
+      security:
+        - sessionAuth: []
+        - tokenAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Process run
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessRun"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    tokenAuth:
+      type: http
+      scheme: bearer
+      description: DRF token auth as already configured by the backend.
+  parameters:
+    ProcessId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ValidationError:
+      description: Field-level validation errors
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    JsonObject:
+      type: object
+      additionalProperties: true
+    ProcessKind:
+      type: string
+      enum:
+        - telegram_post
+    RunStatus:
+      type: string
+      enum:
+        - running
+        - succeeded
+        - failed
+        - timed_out
+    TriggerSource:
+      type: string
+      enum:
+        - manual
+        - scheduled
+    LatestRunSummary:
+      type: object
+      required:
+        - status
+        - startedAt
+        - finishedAt
+      properties:
+        status:
+          anyOf:
+            - $ref: "#/components/schemas/RunStatus"
+            - type: "null"
+        startedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        finishedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+    ProcessListItem:
+      type: object
+      required:
+        - id
+        - name
+        - kind
+        - isActive
+        - scheduleCron
+        - latestRun
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        kind:
+          $ref: "#/components/schemas/ProcessKind"
+        isActive:
+          type: boolean
+        scheduleCron:
+          type:
+            - string
+            - "null"
+        latestRun:
+          $ref: "#/components/schemas/LatestRunSummary"
+    ProcessDetail:
+      allOf:
+        - $ref: "#/components/schemas/ProcessListItem"
+        - type: object
+          required:
+            - settings
+            - webhookPath
+            - createdAt
+            - updatedAt
+          properties:
+            settings:
+              $ref: "#/components/schemas/JsonObject"
+            webhookPath:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    ProcessUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        isActive:
+          type: boolean
+        settings:
+          $ref: "#/components/schemas/JsonObject"
+        webhookPath:
+          type: string
+        scheduleCron:
+          type:
+            - string
+            - "null"
+      additionalProperties: false
+    ProcessRun:
+      type: object
+      required:
+        - id
+        - process
+        - status
+        - triggerSource
+        - settingsSnapshot
+        - result
+        - errorMessage
+        - startedAt
+        - finishedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        process:
+          type: integer
+        status:
+          $ref: "#/components/schemas/RunStatus"
+        triggerSource:
+          $ref: "#/components/schemas/TriggerSource"
+        settingsSnapshot:
+          $ref: "#/components/schemas/JsonObject"
+        result:
+          anyOf:
+            - $ref: "#/components/schemas/JsonObject"
+            - type: "null"
+        errorMessage:
+          type:
+            - string
+            - "null"
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+    PaginatedProcessRunList:
+      type: object
+      required:
+        - count
+        - next
+        - previous
+        - results
+      properties:
+        count:
+          type: integer
+        next:
+          type:
+            - string
+            - "null"
+          format: uri
+        previous:
+          type:
+            - string
+            - "null"
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProcessRun"
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          oneOf:
+            - type: string
+            - type: object
+              additionalProperties: true

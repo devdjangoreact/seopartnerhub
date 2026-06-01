@@ -1,0 +1,114 @@
+---
+description: When and how to use the /api/fake-db/ stub endpoint. Stub fixtures for starter-kit components whose real Django domain is not yet implemented.
+globs:
+  - "frontend/starter-kit/**"
+  - "seopartnerhub/fake_db/**"
+  - "config/urls.py"
+alwaysApply: true
+---
+
+# Fake-db stub endpoint rule
+
+The Django app `seopartnerhub/fake_db/` serves the JSON fixtures from
+`frontend/full-version/src/fake-db-json/` (mirrored verbatim into
+`seopartnerhub/fake_db/data/`) so that `frontend/starter-kit/` can
+render UI **before** the corresponding real Django domain endpoint
+exists.
+
+## When to use `/api/fake-db/`
+
+Use it **only** when **all** of the following are true:
+
+1. A `starter-kit` component or page needs dynamic data that the
+   equivalent `full-version` component reads from
+   `src/fake-db-json/<group>/<file>.json` (or its TypeScript twin
+   under `src/fake-db/`).
+2. There is **no real Django endpoint** for that domain yet (no
+   model, no DRF view, no URL).
+3. Building the real backend is out of scope for the current task.
+
+Do **not** use it for data that already has a real endpoint
+(`/api/users/`, `/_allauth/*`, etc.). Use the real endpoint instead.
+
+## Endpoint surface
+
+The fake-db app exposes exactly two URL patterns under
+`/api/fake-db/`:
+
+| Method | URL                              | Returns                                  |
+| ------ | -------------------------------- | ---------------------------------------- |
+| GET    | `/api/fake-db/manifest/`         | `{ "apps": [...], "pages": [...] }`      |
+| GET    | `/api/fake-db/<group>/<section>/`| raw JSON from `data/<group>/<section>.json` |
+
+`<group>` MUST be `apps` or `pages` (matches the on-disk layout and
+the `frontend/full-version/src/fake-db-json/` layout). `<section>` is
+the JSON filename without extension (e.g. `userProfile`, `academy`).
+
+All fake-db endpoints require `IsAuthenticated`.
+
+OpenAPI: every fake-db view is tagged `fake-db (stub)` and the
+description starts with `STUB DATA.` — this groups them in Swagger
+and makes them trivial to find/remove.
+
+## Backend conventions
+
+When **adding** a new fake-db fixture:
+
+1. Drop a `*.json` file under `seopartnerhub/fake_db/data/apps/` or
+   `seopartnerhub/fake_db/data/pages/`. Filename must match the
+   `frontend/full-version/src/fake-db-json/<group>/<file>.json` it
+   mirrors. **Never** hand-author the JSON: copy it from
+   `frontend/full-version/src/fake-db-json/`. That folder is the
+   source of truth; the Django copy is a mirror.
+2. No code change is required — `FakeDbSectionLoader` picks new files
+   up automatically.
+3. Do not add new HTTP routes; everything goes through
+   `FakeDbSectionView`.
+
+Every public symbol in `seopartnerhub/fake_db/` MUST start its
+docstring with `STUB.` or `STUB DATA` so the intent is unambiguous in
+code search.
+
+## Frontend conventions (starter-kit)
+
+When **consuming** fake-db data in `frontend/starter-kit/`:
+
+1. All fake-db calls go through helpers under
+   `frontend/starter-kit/src/lib/fakeDb/` (e.g. a thin wrapper around
+   `apiRequest('/api/fake-db/<group>/<section>/')`).
+   No component, view, or page may call `fetch('/api/fake-db/...')`
+   directly.
+2. Mark every call site with a short comment:
+
+   ```ts
+   // STUB: /api/fake-db/. Replace with the real `<domain>` endpoint when implemented.
+   ```
+
+3. Do **not** copy `src/fake-db/`, `src/fake-db-json/`, or
+   `src/app/api/*` mock routes from `frontend/full-version/` into
+   `frontend/starter-kit/`. The starter-kit must always go through
+   Django.
+
+## Migrating off a fake-db endpoint
+
+When a real Django domain endpoint for a section is implemented:
+
+1. Build the real DRF endpoint with the field shape that the
+   `frontend/full-version` mock already exposes (frontend-first
+   contract — see `frontend-parity.mdc`).
+2. Update the starter-kit caller in `src/lib/fakeDb/` (or move it
+   out of `fakeDb/` entirely) to point to the new endpoint, and
+   remove the `STUB:` comment.
+3. Delete the now-unused `seopartnerhub/fake_db/data/<group>/<section>.json`
+   if no other component still uses it.
+
+## Forbidden
+
+- Adding business logic, models, migrations, or Celery tasks inside
+  `seopartnerhub/fake_db/`. The app is a passive file server.
+- Mutating fake-db JSON in tests or at runtime — fixtures are
+  read-only.
+- Calling `/api/fake-db/` from server code other than
+  `starter-kit`'s `src/lib/fakeDb/` helpers.
+- Authoring new JSON directly in `seopartnerhub/fake_db/data/`
+  instead of mirroring it from `frontend/full-version/src/fake-db-json/`.

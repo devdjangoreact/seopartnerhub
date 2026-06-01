@@ -15,6 +15,26 @@ docker compose -f docker-compose.local.yml run --rm django python manage.py crea
 - Full-version showcase: http://127.0.0.1:3001
 - Mailpit (email viewer): http://127.0.0.1:8025
 - Flower (Celery): http://127.0.0.1:5555
+- n8n editor: http://127.0.0.1:5678
+
+## n8n backend smoke flow
+
+Authenticated DRF endpoints (session or token auth):
+
+```text
+GET    /api/n8n/processes/           # list with latest-run summary
+GET    /api/n8n/processes/{id}/      # detail with full settings_json
+PATCH  /api/n8n/processes/{id}/      # update name / is_active / settings_json / webhook_path / schedule_cron
+POST   /api/n8n/processes/{id}/trigger/   # manual trigger -> 201 + ProcessRun running
+GET    /api/n8n/processes/{id}/runs/      # run history newest-first
+GET    /api/n8n/runs/{run_id}/            # single run detail
+POST   /api/n8n/callbacks/runs/           # n8n -> Django, X-Signature: HMAC-SHA256 over raw body
+```
+
+Required Django settings (already wired in `config/settings/base.py`,
+overridable via env): `N8N_BASE_URL`, `N8N_WEBHOOK_BASE_URL`,
+`N8N_CALLBACK_HMAC_SECRET`, `N8N_REQUEST_TIMEOUT_SECONDS`,
+`N8N_PROCESS_RUN_TIMEOUT_SECONDS` (default 900).
 
 ## Frontend notes
 

@@ -1,0 +1,83 @@
+---
+description: Pin Docker image tags to exact stable versions. Never use ":latest", "stable", "edge", or other floating tags in compose files or Dockerfiles.
+globs:
+  - "docker-compose*.yml"
+  - "compose/**/Dockerfile"
+  - "compose/**/*.yml"
+alwaysApply: true
+---
+
+# Docker image pinning rule
+
+All container images used in this repository MUST be pinned to a
+specific stable version. Floating tags break reproducibility, silently
+upgrade dependencies between rebuilds, and make production fragile.
+
+## Hard rules
+
+1. **Never use `:latest`.** It is forbidden in any `image:` directive
+ in `docker-compose*.yml` and in any `FROM ...:latest` line in
+ `compose/**/Dockerfile`.
+2. **Never use other floating tags** that change over time, including
+ but not limited to: `stable`, `edge`, `next`, `beta`, `main`,
+ `master`, `current`, `rolling`, bare major-only tags for fast-moving
+ software (e.g. `node`, `n8n`, `mailpit`, `traefik`).
+3. **Always use the latest published *stable* version** at the moment
+ of pinning. Verify on Docker Hub / GHCR / the vendor's official
+ registry. Prefer the exact `MAJOR.MINOR.PATCH` (or vendor's
+ equivalent) tag, e.g. `2.22.6`, `v1.30.1`, `v3.7.1`, `2.34.0`.
+4. **When you encounter an existing `:latest` reference**, do not
+ leave it. Replace it with the version that the floating tag
+ currently resolves to (so the pin keeps the working behavior) and
+ commit the pin together with any other changes that depend on it.
+5. **Bumping a pin is a deliberate change**, not a side effect of an
+ unrelated edit. Bump in its own commit / step, with a short note
+ about why (security fix, required feature, end-of-life).
+
+## How to pick the version
+
+1. Open the image's official tag list (Docker Hub `/tags`, GHCR
+ `pkgs/...`, or vendor docs).
+2. Pick the **highest stable release** — not `latest`, not `beta`,
+ not `next`, not `rc`, not `exp`. If a `:stable` floating tag
+ exists, find which concrete version it currently points to
+ (matching digest) and pin to that concrete version.
+3. Use the **most specific tag the registry publishes** for that
+ release (e.g. `2.22.6` over `2.22`, `v1.30.1` over `v1.30`).
+4. If a digest pin (`image@sha256:...`) is required by ops, that is
+ also acceptable and stricter than a tag.
+
+## Examples
+
+| Bad | Good |
+| ----------------------------------------- | ----------------------------------------- |
+| `image: docker.n8n.io/n8nio/n8n:latest` | `image: docker.n8n.io/n8nio/n8n:2.22.6` |
+| `image: docker.io/axllent/mailpit:latest` | `image: docker.io/axllent/mailpit:v1.30.1` |
+| `image: docker.io/axllent/mailpit:edge` | `image: docker.io/axllent/mailpit:v1.30.1` |
+| `image: docker.io/redis` | `image: docker.io/redis:7.2.5` |
+| `FROM node:latest` | `FROM node:20.18.1-alpine` |
+| `FROM python:3` | `FROM python:3.14-slim-bookworm` |
+
+## Forbidden
+
+- `:latest` anywhere in `docker-compose*.yml` or `compose/**/Dockerfile`.
+- `:stable` / `:edge` / `:next` / `:beta` / `:main` / `:master` /
+ `:rolling` / `:current` floating tags.
+- Untagged `image:` lines (no tag at all → equivalent to `:latest`).
+- Major-only tags for fast-moving images (e.g. `n8n`, `node`,
+ `python`, `mailpit`) where the upstream releases breaking changes
+ within a major.
+
+## Workflow checklist
+
+Before finishing any change that touches a `docker-compose*.yml` or
+`compose/**/Dockerfile`:
+
+- [ ] No `:latest` was added or left behind.
+- [ ] No other floating tag (`stable`/`edge`/`next`/`beta`/...) was
+ added or left behind.
+- [ ] Every new `image:` / `FROM` line has an exact version tag
+ (or digest pin).
+- [ ] If an existing floating tag was replaced, the new pin matches
+ the version the floating tag currently resolves to, so behavior
+ does not change unexpectedly.

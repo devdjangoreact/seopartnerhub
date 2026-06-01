@@ -30,6 +30,11 @@ specs/                         # Spec Kit feature specs
 .specify/                      # Spec Kit infrastructure
 ```
 
+Concrete example of this layout: `seopartnerhub/n8n/` (process management,
+HMAC callbacks, scheduled triggers) — see `models/`, `services/`,
+`selectors/`, `tasks/`, `integrations/` and `api/{views,serializers}/`
+sub-packages there.
+
 ## 2. OOP — services are classes
 
 - Business logic lives in **service classes** under

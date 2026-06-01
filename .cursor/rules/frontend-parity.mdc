@@ -22,12 +22,20 @@ are mechanical.
 
 `full-version` ships with **mock / static / fake data** (fixtures,
 fake API routes under `src/app/api/*`, hardcoded arrays in
-`src/data/`, `src/fake-db/`, etc.).
+`src/data/`, `src/fake-db/`, JSON fixtures in `src/fake-db-json/`,
+etc.).
 
 `starter-kit` MUST instead source **all dynamic data from the Django
 backend** (DRF, sessions, allauth headless API, REST endpoints under
 `/api/...`). This is the only sanctioned divergence from
 `full-version`.
+
+When the real Django domain endpoint for some data does not yet
+exist, `starter-kit` MUST go through the Django stub endpoint
+`/api/fake-db/<group>/<section>/`, which mirrors
+`frontend/full-version/src/fake-db-json/` 1:1. Rules for this stub
+endpoint live in `.cursor/rules/fake-db-endpoint.mdc`. Never copy
+`src/fake-db/` or `src/fake-db-json/` into `starter-kit` directly.
 
 When porting a component / page / view from `full-version` to
 `starter-kit`:
@@ -37,8 +45,10 @@ When porting a component / page / view from `full-version` to
 - Replace mock fetches and local fake arrays with real calls to the
   Django backend (server-side `fetch` in RSC, route handlers, or
   client-side via the shared API client).
-- Do not copy `full-version`'s `src/fake-db/`, `src/app/api/`,
-  or in-file mock arrays. Replace them with backend calls.
+- Do not copy `full-version`'s `src/fake-db/`, `src/fake-db-json/`,
+  `src/app/api/`, or in-file mock arrays. Replace them with backend
+  calls (real domain endpoint where it exists, otherwise
+  `/api/fake-db/` per `.cursor/rules/fake-db-endpoint.mdc`).
 
 ### Data contract direction: frontend-first
 
@@ -179,9 +189,11 @@ Before finishing a change under `frontend/starter-kit/`:
   `starter-kit` that are absent from `full-version`.
 - Rewriting a component from scratch when an equivalent exists in
   `full-version` — port it instead.
-- Copying `src/fake-db/`, `src/data/*` fixtures used as runtime data,
-  or fake API route handlers from `full-version`. Use the Django
-  backend instead.
+- Copying `src/fake-db/`, `src/fake-db-json/`, `src/data/*` fixtures
+  used as runtime data, or fake API route handlers from
+  `full-version`. Use the Django backend instead — the real domain
+  endpoint where it exists, otherwise `/api/fake-db/` per
+  `.cursor/rules/fake-db-endpoint.mdc`.
 - Renaming a field, changing casing, or restructuring a payload in
   TypeScript to "make Django data fit" a `full-version` component.
   Change the DRF serializer instead so the wire format matches the

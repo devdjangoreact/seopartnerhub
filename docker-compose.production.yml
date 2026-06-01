@@ -4,6 +4,11 @@ volumes:
   production_traefik: {}
   
   production_redis_data: {}
+  production_n8n_data: {}
+  production_frontend_starter_node_modules: {}
+  production_frontend_starter_next_cache: {}
+  production_frontend_full_node_modules: {}
+  production_frontend_full_next_cache: {}
   
 
 
@@ -17,9 +22,13 @@ services:
     depends_on:
       - postgres
       - redis
+      - n8n
     env_file:
       - ./.envs/.production/.django
       - ./.envs/.production/.postgres
+    environment:
+      N8N_BASE_URL: http://n8n:5678
+      N8N_WEBHOOK_BASE_URL: http://n8n:5678/webhook
     command: /start
 
   postgres:
@@ -52,7 +61,74 @@ services:
     
     volumes:
       - production_redis_data:/data
-    
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.22.6
+    depends_on:
+      - redis
+    environment:
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
+      NODE_ENV: production
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      GENERIC_TIMEZONE: UTC
+      N8N_RUNNERS_ENABLED: "true"
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?N8N_ENCRYPTION_KEY is required}
+      DB_TYPE: sqlite
+      EXECUTIONS_MODE: regular
+      QUEUE_BULL_REDIS_HOST: redis
+      QUEUE_BULL_REDIS_PORT: 6379
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+    volumes:
+      - production_n8n_data:/home/node/.n8n
+    ports:
+      - "127.0.0.1:5678:5678"
+
+  frontend_starter:
+    build:
+      context: .
+      dockerfile: ./compose/local/frontend/Dockerfile
+      args:
+        FRONTEND_DIR: frontend/starter-kit
+    image: seopartnerhub_production_frontend_starter
+    depends_on:
+      - django
+    environment:
+      FRONTEND_DIR: frontend/starter-kit
+      NEXT_TELEMETRY_DISABLED: "1"
+      NODE_ENV: production
+      NEXT_PUBLIC_SITE_URL: ${FRONTEND_STARTER_PUBLIC_URL:-http://localhost:3000}
+      NEXT_PUBLIC_DJANGO_URL: ${DJANGO_PUBLIC_URL:-http://localhost:8000}
+      DJANGO_INTERNAL_URL: http://django:5000
+    volumes:
+      - ./frontend/starter-kit:/app/frontend/starter-kit:z
+      - production_frontend_starter_node_modules:/app/frontend/starter-kit/node_modules
+      - production_frontend_starter_next_cache:/app/frontend/starter-kit/.next
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  frontend_full:
+    build:
+      context: .
+      dockerfile: ./compose/local/frontend/Dockerfile
+      args:
+        FRONTEND_DIR: frontend/full-version
+    image: seopartnerhub_production_frontend_full
+    depends_on:
+      - django
+    environment:
+      FRONTEND_DIR: frontend/full-version
+      NEXT_TELEMETRY_DISABLED: "1"
+      NODE_ENV: production
+      NEXT_PUBLIC_SITE_URL: ${FRONTEND_FULL_PUBLIC_URL:-http://localhost:3001}
+    volumes:
+      - ./frontend/full-version:/app/frontend/full-version:z
+      - production_frontend_full_node_modules:/app/frontend/full-version/node_modules
+      - production_frontend_full_next_cache:/app/frontend/full-version/.next
+    ports:
+      - "127.0.0.1:3001:3000"
 
   celeryworker:
     <<: *django

@@ -1,0 +1,112 @@
+[
+  {
+    "id": "1",
+    "url": "",
+    "title": "Design Review",
+    "start": "2026-06-01T20:18:42.373Z",
+    "end": "2026-06-02T20:18:42.373Z",
+    "allDay": false,
+    "extendedProps": {
+      "calendar": "Business"
+    }
+  },
+  {
+    "id": "2",
+    "url": "",
+    "title": "Meeting With Client",
+    "start": "2026-06-18T21:00:00.000Z",
+    "end": "2026-06-19T21:00:00.000Z",
+    "allDay": true,
+    "extendedProps": {
+      "calendar": "Business"
+    }
+  },
+  {
+    "id": "3",
+    "url": "",
+    "title": "Family Trip",
+    "allDay": true,
+    "start": "2026-06-20T21:00:00.000Z",
+    "end": "2026-06-22T21:00:00.000Z",
+    "extendedProps": {
+      "calendar": "Holiday"
+    }
+  },
+  {
+    "id": "4",
+    "url": "",
+    "title": "Doctor's Appointment",
+    "start": "2026-06-18T21:00:00.000Z",
+    "end": "2026-06-19T21:00:00.000Z",
+    "allDay": true,
+    "extendedProps": {
+      "calendar": "Personal"
+    }
+  },
+  {
+    "id": "5",
+    "url": "",
+    "title": "Dart Game?",
+    "start": "2026-06-16T21:00:00.000Z",
+    "end": "2026-06-17T21:00:00.000Z",
+    "allDay": true,
+    "extendedProps": {
+      "calendar": "ETC"
+    }
+  },
+  {
+    "id": "6",
+    "url": "",
+    "title": "Meditation",
+    "start": "2026-06-16T21:00:00.000Z",
+    "end": "2026-06-17T21:00:00.000Z",
+    "allDay": true,
+    "extendedProps": {
+      "calendar": "Personal"
+    }
+  },
+  {
+    "id": "7",
+    "url": "",
+    "title": "Dinner",
+    "start": "2026-06-16T21:00:00.000Z",
+    "end": "2026-06-17T21:00:00.000Z",
+    "allDay": true,
+    "extendedProps": {
+      "calendar": "Family"
+    }
+  },
+  {
+    "id": "8",
+    "url": "",
+    "title": "Product Review",
+    "start": "2026-06-16T21:00:00.000Z",
+    "end": "2026-06-17T21:00:00.000Z",
+    "allDay": true,
+    "extendedProps": {
+      "calendar": "Business"
+    }
+  },
+  {
+    "id": "9",
+    "url": "",
+    "title": "Monthly Meeting",
+    "start": "2026-06-30T21:00:00.000Z",
+    "end": "2026-06-30T21:00:00.000Z",
+    "allDay": true,
+    "extendedProps": {
+      "calendar": "Business"
+    }
+  },
+  {
+    "id": "10",
+    "url": "",
+    "title": "Monthly Checkup",
+    "start": "2026-04-30T21:00:00.000Z",
+    "end": "2026-04-30T21:00:00.000Z",
+    "allDay": true,
+    "extendedProps": {
+      "calendar": "Personal"
+    }
+  }
+]

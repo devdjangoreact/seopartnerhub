@@ -51,6 +51,8 @@ api/  →  services/  →  selectors/ + models + integrations(protocol)
 | `seopartnerhub/<app>/tasks/`                  | Celery tasks (idempotent, with retries)          |
 | `seopartnerhub/<app>/integrations/`           | Adapters for external APIs / webhooks / n8n     |
 | `seopartnerhub/<app>/models.py`               | Django ORM models + invariants                   |
+| `seopartnerhub/n8n/`                          | n8n processes app: models, services, HMAC callbacks, scheduled triggers |
+| `seopartnerhub/fake_db/`                      | STUB fixtures served at `/api/fake-db/` (see `.cursor/rules/fake-db-endpoint.mdc`) |
 | `tests/`                                      | Cross-app tests                                  |
 | `specs/`                                      | Spec Kit feature specs                           |
 | `.specify/`                                   | Spec Kit infrastructure                          |

@@ -46,6 +46,12 @@ urlpatterns += [
         SpectacularSwaggerView.as_view(url_name="api-schema"),
         name="api-docs",
     ),
+    # n8n -> Django HMAC-signed completion callbacks (no DRF router; AllowAny).
+    path("api/n8n/", include("seopartnerhub.n8n.api.urls")),
+    # STUB fixtures: see seopartnerhub/fake_db/ and
+    # .cursor/rules/fake-db-endpoint.mdc. Replace with real domain endpoints
+    # when each domain is implemented.
+    path("api/fake-db/", include("seopartnerhub.fake_db.api.urls")),
 ]
 
 if settings.DEBUG:
