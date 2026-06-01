@@ -164,3 +164,26 @@ See [research.md](./research.md). All research decisions are resolved; there are
 Re-evaluated after Phase 1 design: PASS. The design keeps django-allauth as the only auth surface,
 keeps full-version isolated, uses typed frontend contracts, and documents required settings and
 quality gates.
+
+## Implementation Notes (after Phase 8)
+
+- Route group: the pre-existing `(blank-layout-pages)` group in `frontend/starter-kit/` was
+  removed and replaced by `(auth)` to match the spec/tasks; the stale `views/Login.tsx` donor was
+  deleted because it was referenced only by the removed route.
+- Form validation: `react-hook-form` + `zod` (via `@hookform/resolvers`), as planned. Added to
+  `frontend/starter-kit/package.json` dev/runtime deps. The plan called out
+  `openapi-typescript` for API type generation; both `openapi-typescript` (devDep) and
+  `openapi-fetch` (runtime) are now declared, with `pnpm generate:api` wired to the local
+  `/api/schema/` endpoint.
+- Auth lockout: persisted in Django cache (default `LocMemCache` in `local.py`); cache key
+  prefix and TTL are env-configurable via `DJANGO_SIGN_IN_LOCKOUT_THRESHOLD`,
+  `DJANGO_SIGN_IN_LOCKOUT_SECONDS`, and `SIGN_IN_LOCKOUT_CACHE_PREFIX`. Enforcement is wired
+  into `AccountAdapter.pre_authenticate` and clearing into `AccountAdapter.login`.
+- Existing `any` usages in `frontend/starter-kit/src/@menu/`, `@core/`, and `components/layout/`
+  are part of the vendored Vuexy template; they are out of scope for this feature. The no-`any`
+  rule (Article II) is enforced strictly in code added under this feature
+  (`src/lib/api`, `src/lib/auth`, `src/app/(auth)`, `src/app/(dashboard)/layout.tsx`).
+- Manual validation (T084-T086) is performed inside Docker because the host does not have
+  `pnpm` and `node_modules` are mounted as named volumes by the compose service. Run
+  `docker compose -f docker-compose.local.yml up --build` and follow the checks in
+  `quickstart.md`.

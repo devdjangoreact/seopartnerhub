@@ -13,7 +13,34 @@ SECRET_KEY = env(
     default="1AawOLKLCBBFrrVahj6yM8diIaz1SiMu7qiSV1RQMmzML0JVpPlVZ4JjEIKBvHfB",
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1"]  # noqa: S104
+ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1", "django"]  # noqa: S104
+
+# CORS / CSRF for the two local frontend variants
+# ------------------------------------------------------------------------------
+# Starter-kit talks to Django from http://localhost:3000.
+# Full-version showcase at http://localhost:3001 MUST NOT call Django; we still
+# trust the origin so accidental dev requests don't get rejected as opaque
+# CORS failures, making local debugging easier.
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+]
+CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+# CSRF cookie must be readable by the frontend so it can echo it into the
+# X-CSRFToken header on unsafe browser requests. Local-only override.
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
 
 # CACHES
 # ------------------------------------------------------------------------------
@@ -62,10 +89,11 @@ if env("USE_DOCKER") == "yes":
     hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
     INTERNAL_IPS += [".".join([*ip.split(".")[:-1], "1"]) for ip in ips]
     # RunServerPlus
-    # ------------------------------------------------------------------------------
-    # This is a custom setting for RunServerPlus to fix reloader issue in Windows docker environment
+    # --------------------------------------------------------------------------
+    # Custom setting for RunServerPlus to fix the reloader issue in the
+    # Windows docker environment.
     # Werkzeug reloader type [auto, watchdog, or stat]
-    RUNSERVERPLUS_POLLER_RELOADER_TYPE = 'stat'
+    RUNSERVERPLUS_POLLER_RELOADER_TYPE = "stat"
     # If you have CPU and IO load issues, you can increase this poller interval e.g) 5
     RUNSERVERPLUS_POLLER_RELOADER_INTERVAL = 1
 

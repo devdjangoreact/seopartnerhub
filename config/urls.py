@@ -22,6 +22,9 @@ urlpatterns = [
     # User management
     path("users/", include("seopartnerhub.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
+    # django-allauth headless browser endpoints for the starter-kit frontend.
+    # See https://docs.allauth.org/en/latest/headless/openapi-specification/
+    path("_allauth/", include("allauth.headless.urls")),
     # Your stuff: custom urls includes go here
     # ...
     # Media files

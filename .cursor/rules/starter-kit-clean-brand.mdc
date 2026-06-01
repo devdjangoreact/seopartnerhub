@@ -1,0 +1,105 @@
+---
+description: Forbid template-vendor references (Vuexy/Materio/Pixinvent/ThemeSelection) in frontend/starter-kit. The starter-kit must read as an original SEOPartnerHub product, not a third-party template demo.
+globs:
+  - "frontend/starter-kit/**"
+alwaysApply: true
+---
+
+# Starter-kit clean brand rule
+
+`frontend/starter-kit/` is the production-facing surface for
+SEOPartnerHub. It MUST read as an original, in-house product. The fact
+that its layout primitives originated from a third-party admin template
+(Vuexy / Materio / Pixinvent / ThemeSelection / ThemeForest) is an
+internal implementation detail and MUST NOT be exposed in code, copy,
+branding, links, comments, file names, or assets.
+
+## Forbidden references
+
+In any file under `frontend/starter-kit/**` you MUST NOT add or leave:
+
+- The literal strings `Vuexy`, `vuexy`, `Pixinvent`, `pixinvent`,
+  `ThemeSelection`, `themeselection`, `Materio`, `materio`,
+  `themeforest.net`, `pixinvent.com`, `themeselection.com`,
+  `pixinvent.ticksy.com`, `vuexy-mui-next-demo`,
+  `vuexy-mui-nextjs-admin-template`, or any case / prefix / suffix
+  variant of these.
+- Identifiers (class names, variables, imports, CSS classes, cookies,
+  storage keys, env vars, package names) that embed any of the tokens
+  above. Examples that MUST be avoided: `VuexyLogo`, `vuexyTheme`,
+  `vuexy-mui-next-demo-1`, `vuexy-mui-nextjs-admin-template`,
+  `MaterioLayout`, `PixinventFooter`.
+- Logo assets, favicons, OG images, illustrations, or SVG marks taken
+  from the original template's brand. The brand mark in
+  `src/@core/svg/Logo.tsx` and any related logo component MUST be a
+  custom, neutral SEOPartnerHub mark.
+- Footer copy crediting the template author or vendor
+  ("Made with ❤️ by Pixinvent", "by ThemeSelection", "Powered by
+  Materio", etc.).
+- Outbound links to template documentation, support, demos, license
+  pages, "More themes", or marketplace listings — for example
+  `themeforest.net/...`, `demos.pixinvent.com/...`,
+  `pixinvent.ticksy.com`, `themeselection.com/...`. ANY external link
+  in `frontend/starter-kit/**` must point to a generic upstream
+  resource (Next.js, MUI, React, Tailwind, TypeScript official docs)
+  or to a SEOPartnerHub-owned URL.
+- README, JSDoc, or inline comments that describe the project as a
+  template ("This is the Vuexy starter kit", "based on the Materio
+  layout", "Vuexy admin template", etc.). Describe it as the
+  SEOPartnerHub frontend instead.
+
+## Required values
+
+- `themeConfig.templateName` MUST be `SEOPartnerHub`.
+- `themeConfig.settingsCookieName` MUST start with `seopartnerhub-`.
+- `package.json` `"name"` MUST be `seopartnerhub-frontend` (or another
+  `seopartnerhub-*` slug). `"license"` MUST NOT be `Commercial`
+  (the upstream template's license); use `UNLICENSED` or the project's
+  agreed license.
+- The brand SVG in `src/@core/svg/Logo.tsx` MUST be the SEOPartnerHub
+  mark. Do not reintroduce the original template's V-shape paths.
+- Footer components in
+  `src/components/layout/{horizontal,vertical}/FooterContent.tsx` MUST
+  render only neutral SEOPartnerHub copyright text and, if needed,
+  internal or generic-resource links. No third-party template
+  attribution or marketplace links.
+- The shared logo component at `src/components/layout/shared/Logo.tsx`
+  MUST import the SVG mark under a neutral name (e.g. `BrandLogo`),
+  never `VuexyLogo` or any other vendor-named alias.
+
+## Allowed wording
+
+- Refer to the project as `SEOPartnerHub` (or "the SEOPartnerHub
+  frontend").
+- It is fine to mention the generic upstream stack (Next.js, MUI,
+  React, Tailwind, TypeScript) and link to their official docs as
+  general resources.
+- Cross-references to `frontend/full-version/` for parity guidance
+  (per `.cursor/rules/frontend-parity.mdc`) are allowed in rule and
+  doc files OUTSIDE `frontend/starter-kit/**`. They MUST NOT appear
+  in shipped code or user-visible copy inside the starter-kit.
+
+## Workflow checklist
+
+Before finishing any change under `frontend/starter-kit/**`:
+
+- [ ] Ran a case-insensitive grep over the changed files for
+      `vuexy|pixinvent|themeselection|materio|themeforest` and got
+      zero matches.
+- [ ] No new file, identifier, asset, cookie, storage key, or env var
+      embeds a vendor token from the list above.
+- [ ] All external links point to generic upstream docs or
+      SEOPartnerHub-owned URLs.
+- [ ] No template-author attribution was added to footers, about
+      pages, or auth pages.
+- [ ] Any new logo / favicon / OG image is original or neutral and
+      does not carry the upstream template's brand.
+
+## Relationship to frontend-parity rule
+
+`.cursor/rules/frontend-parity.mdc` requires `starter-kit` to mirror
+`full-version`'s structure, naming, and component shapes. That rule
+still applies. **Brand identity is the deliberate exception to
+parity:** never port the template's brand strings, logos, or vendor
+links from `full-version` (or anywhere else) into `starter-kit`.
+Mirror layout and code; do not mirror brand.

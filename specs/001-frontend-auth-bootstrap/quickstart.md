@@ -42,13 +42,16 @@ docker compose -f docker-compose.local.yml run --rm django python manage.py crea
 ## Showcase check
 
 1. Open `http://localhost:3001`.
-2. Navigate through the full-version showcase.
+2. Navigate through the full-version showcase (e.g. `/en/dashboards/crm`).
 3. Confirm no sign-in is required.
-4. Confirm network requests do not call `/api/` or `/_allauth/`.
+4. Open the browser DevTools network panel and confirm zero requests hit
+   `/api/` or `/_allauth/` paths.
+5. Stop the Django container (`docker compose -f docker-compose.local.yml stop django`)
+   and confirm the showcase keeps rendering and navigating; restart Django when done.
 
 ## Quality checks
 
-Backend:
+Backend (host with `uv` and MSVC build tools, or inside Docker):
 
 ```powershell
 uv run ruff check . --fix
@@ -57,22 +60,36 @@ uv run mypy seopartnerhub config
 uv run pytest
 ```
 
-Starter frontend:
+Without MSVC build tools on Windows, run ruff via `uvx` (no project deps):
 
 ```powershell
-cd frontend/starter-kit
-pnpm lint
-pnpm typecheck
-pnpm build
+uvx ruff@latest check config seopartnerhub
+uvx ruff@latest format --check config seopartnerhub
+```
+
+Or run the full pipeline inside Docker:
+
+```powershell
+docker compose -f docker-compose.local.yml run --rm django ruff check . --fix
+docker compose -f docker-compose.local.yml run --rm django ruff format .
+docker compose -f docker-compose.local.yml run --rm django mypy seopartnerhub config
+docker compose -f docker-compose.local.yml run --rm django pytest
+```
+
+Starter frontend (inside the running container, since pnpm and node_modules live there):
+
+```powershell
+docker compose -f docker-compose.local.yml exec frontend_starter pnpm lint
+docker compose -f docker-compose.local.yml exec frontend_starter pnpm typecheck
+docker compose -f docker-compose.local.yml exec frontend_starter pnpm build
 ```
 
 Full-version frontend:
 
 ```powershell
-cd frontend/full-version
-pnpm lint
-pnpm typecheck
-pnpm build
+docker compose -f docker-compose.local.yml exec frontend_full pnpm lint
+docker compose -f docker-compose.local.yml exec frontend_full pnpm typecheck
+docker compose -f docker-compose.local.yml exec frontend_full pnpm build
 ```
 
 ## Implementation notes

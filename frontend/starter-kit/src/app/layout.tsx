@@ -16,18 +16,19 @@ import '@/app/globals.css'
 // Generated Icon CSS Imports
 import '@assets/iconify-icons/generated-icons.css'
 
+// Component Imports
+import Providers from '@components/Providers'
+
+// Auth Imports
+import { AuthProvider } from '@/lib/auth/AuthProvider'
+
 export const metadata = {
-  title: 'Vuexy - MUI Next.js Admin Dashboard Template',
-  description:
-    'Vuexy - MUI Next.js Admin Dashboard Template - is the most developer friendly & highly customizable Admin Dashboard Template based on MUI v5.'
+  title: 'SEOPartnerHub',
+  description: 'Internal SEO and BizDev tooling.'
 }
 
 const RootLayout = async (props: ChildrenType) => {
   const { children } = props
-
-  // Type guard to ensure lang is a valid Locale
-
-  // Vars
 
   const systemMode = await getSystemMode()
   const direction = 'ltr'
@@ -36,7 +37,9 @@ const RootLayout = async (props: ChildrenType) => {
     <html id='__next' lang='en' dir={direction} suppressHydrationWarning>
       <body className='flex is-full min-bs-full flex-auto flex-col'>
         <InitColorSchemeScript attribute='data' defaultMode={systemMode} />
-        {children}
+        <Providers direction={direction}>
+          <AuthProvider>{children}</AuthProvider>
+        </Providers>
       </body>
     </html>
   )

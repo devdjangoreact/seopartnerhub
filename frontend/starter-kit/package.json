@@ -1,7 +1,7 @@
 {
-  "name": "vuexy-mui-nextjs-admin-template",
-  "version": "5.0.1",
-  "license": "Commercial",
+  "name": "seopartnerhub-frontend",
+  "version": "0.1.0",
+  "license": "UNLICENSED",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -10,7 +10,9 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
+    "typecheck": "tsc --noEmit",
     "build:icons": "tsx src/assets/iconify-icons/bundle-icons-css.ts",
+    "generate:api": "openapi-typescript http://localhost:8000/api/schema/ --output src/lib/api/schema.ts",
     "postinstall": "npm run build:icons",
     "clean": "rm -rf .next",
     "clear": "rm -rf node_modules .next"
@@ -20,17 +22,22 @@
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@floating-ui/react": "0.27.16",
+    "@hookform/resolvers": "5.2.2",
     "@mui/lab": "7.0.1-beta.19",
     "@mui/material": "7.3.6",
     "@mui/material-nextjs": "7.3.6",
+    "@mui/utils": "7.3.6",
     "classnames": "2.5.1",
     "next": "16.1.1",
+    "openapi-fetch": "0.15.0",
     "react": "19.2.3",
     "react-colorful": "5.6.1",
     "react-dom": "19.2.3",
+    "react-hook-form": "7.69.0",
     "react-perfect-scrollbar": "1.5.8",
     "react-use": "17.6.0",
-    "server-only": "0.0.1"
+    "server-only": "0.0.1",
+    "zod": "4.1.13"
   },
   "devDependencies": {
     "@iconify/json": "2.2.408",
@@ -49,6 +56,7 @@
     "eslint-config-prettier": "9.1.0",
     "eslint-import-resolver-typescript": "3.7.0",
     "eslint-plugin-import": "2.31.0",
+    "openapi-typescript": "7.10.0",
     "postcss": "8.5.6",
     "postcss-styled-syntax": "0.7.1",
     "prettier": "3.6.2",

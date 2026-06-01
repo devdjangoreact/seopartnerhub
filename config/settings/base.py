@@ -78,6 +78,7 @@ THIRD_PARTY_APPS = [
     "allauth.account",
     "allauth.mfa",
     "allauth.socialaccount",
+    "allauth.headless",
     "django_celery_beat",
     "rest_framework",
     "rest_framework.authtoken",
@@ -245,6 +246,11 @@ DJANGO_ADMIN_FORCE_ALLAUTH = env.bool("DJANGO_ADMIN_FORCE_ALLAUTH", default=Fals
 # https://docs.djangoproject.com/en/dev/ref/settings/#logging
 # See https://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
+#
+# Auth-event logger ("seopartnerhub.auth") is configured here so that every
+# allauth-driven event (signup, login success/failure, logout, password reset,
+# email verification, lockout) lands in a single stream. Application code MUST
+# use `logging.getLogger(__name__)`; never `print()`.
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -261,6 +267,13 @@ LOGGING = {
         },
     },
     "root": {"level": "INFO", "handlers": ["console"]},
+    "loggers": {
+        "seopartnerhub.auth": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": False,
+        },
+    },
 }
 
 REDIS_URL = env("REDIS_URL", default="redis://redis:6379/0")
@@ -326,6 +339,41 @@ SOCIALACCOUNT_ADAPTER = "seopartnerhub.users.adapters.SocialAccountAdapter"
 # https://docs.allauth.org/en/latest/socialaccount/configuration.html
 SOCIALACCOUNT_FORMS = {"signup": "seopartnerhub.users.forms.UserSocialSignupForm"}
 
+# django-allauth headless
+# ------------------------------------------------------------------------------
+# https://docs.allauth.org/en/latest/headless/configuration.html
+# Frontend product UI for browser flows; configurable per env so it works in
+# Docker, host, and future deployments. The starter-kit is the only frontend
+# wired to the backend; URLs here are deep links the user lands on after
+# clicking links inside auth emails (verification, password reset, etc.).
+FRONTEND_BASE_URL = env(
+    "DJANGO_FRONTEND_BASE_URL",
+    default="http://localhost:3000",
+)
+HEADLESS_ONLY = False
+HEADLESS_FRONTEND_URLS = {
+    "account_confirm_email": FRONTEND_BASE_URL + "/verify-email/{key}",
+    "account_reset_password": FRONTEND_BASE_URL + "/reset-password",
+    "account_reset_password_from_key": (FRONTEND_BASE_URL + "/reset-password/{key}"),
+    "account_signup": FRONTEND_BASE_URL + "/register",
+}
+# MFA stays installed but is not exposed in headless v1.
+HEADLESS_CLIENTS = ("browser",)
+
+# Sign-in lockout (Article X + spec FR-011)
+# ------------------------------------------------------------------------------
+# Cache-backed throttle for failed sign-in attempts. Threshold and duration are
+# settings-driven so ops can tune without redeploying code.
+SIGN_IN_LOCKOUT_THRESHOLD = env.int(
+    "DJANGO_SIGN_IN_LOCKOUT_THRESHOLD",
+    default=5,
+)
+SIGN_IN_LOCKOUT_SECONDS = env.int(
+    "DJANGO_SIGN_IN_LOCKOUT_SECONDS",
+    default=60,
+)
+SIGN_IN_LOCKOUT_CACHE_PREFIX = "auth:lockout:"
+
 # django-rest-framework
 # -------------------------------------------------------------------------------
 # django-rest-framework - https://www.django-rest-framework.org/api-guide/settings/
@@ -339,7 +387,9 @@ REST_FRAMEWORK = {
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
-CORS_URLS_REGEX = r"^/api/.*$"
+# Cover both DRF endpoints and allauth headless browser endpoints so the
+# starter-kit frontend can talk to either via Next rewrites or directly.
+CORS_URLS_REGEX = r"^/(api|_allauth)/.*$"
 
 # By Default swagger ui is available only to admin user(s). You can change permission classes to change that
 # See more configuration options at https://drf-spectacular.readthedocs.io/en/latest/settings.html#settings

@@ -11,6 +11,35 @@ License: MIT
 
 Moved to [settings](https://cookiecutter-django.readthedocs.io/en/latest/1-getting-started/settings.html).
 
+## Quick start
+
+One-command local stack (Django + Postgres + Redis + Celery + Mailpit + two Next.js frontends):
+
+```bash
+docker compose -f docker-compose.local.yml up --build
+```
+
+Local URLs:
+
+- Django backend: http://127.0.0.1:8000
+- Starter frontend (wired to Django, MVP target): http://127.0.0.1:3000
+- Full-version showcase (component donor, backend-free): http://127.0.0.1:3001
+- Mailpit (email viewer): http://127.0.0.1:8025
+- Flower (Celery): http://127.0.0.1:5555
+
+See `readme_start.md` for the developer quick start and `readme_spec.md` for the project constitution.
+
+## Frontend integration
+
+- `frontend/starter-kit/` is the product UI. It uses django-allauth headless browser endpoints
+  under `/_allauth/browser/v1/...` via Next.js rewrites for same-origin auth.
+- `frontend/full-version/` is a Vuexy component **donor / showcase**. It is fully browsable
+  without an account and does not call the Django backend. Components are copied from here into
+  `frontend/starter-kit/` as features land.
+- Auth is session-cookie based. No bearer tokens. For DRF endpoints, the starter-kit uses the same
+  Django session via `SessionAuthentication`; raw DRF token auth is reserved for admin / scripts
+  and not used by the product UI.
+
 ## Basic Commands
 
 ### Setting Up Your Users

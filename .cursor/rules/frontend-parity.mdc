@@ -1,0 +1,188 @@
+---
+description: Keep frontend/starter-kit aligned with frontend/full-version. Mirror components, folder layout, file names, and imports.
+globs:
+  - "frontend/starter-kit/**"
+alwaysApply: true
+---
+
+# Frontend parity rule
+
+The repository ships two frontends:
+
+- `frontend/full-version/` — the reference implementation (Materio
+  Next.js admin template, complete feature set).
+- `frontend/starter-kit/` — the active development surface, a trimmed
+  version of the same template.
+
+`starter-kit` MUST stay structurally and stylistically identical to
+`full-version` so that future template upgrades and cross-port merges
+are mechanical.
+
+## The single intentional difference
+
+`full-version` ships with **mock / static / fake data** (fixtures,
+fake API routes under `src/app/api/*`, hardcoded arrays in
+`src/data/`, `src/fake-db/`, etc.).
+
+`starter-kit` MUST instead source **all dynamic data from the Django
+backend** (DRF, sessions, allauth headless API, REST endpoints under
+`/api/...`). This is the only sanctioned divergence from
+`full-version`.
+
+When porting a component / page / view from `full-version` to
+`starter-kit`:
+
+- Keep file location, name, exports, props, types, and JSX/markup
+  identical.
+- Replace mock fetches and local fake arrays with real calls to the
+  Django backend (server-side `fetch` in RSC, route handlers, or
+  client-side via the shared API client).
+- Do not copy `full-version`'s `src/fake-db/`, `src/app/api/`,
+  or in-file mock arrays. Replace them with backend calls.
+
+### Data contract direction: frontend-first
+
+**The frontend is the source of truth for the API contract.** The
+shape the component already consumes in `full-version` (its props,
+types under `src/types/`, mock fixtures under `src/fake-db/` /
+`src/data/`) IS the target shape of the Django REST endpoint.
+
+- **Change Django to fit the frontend**, not the other way around.
+  When wiring a `starter-kit` component to Django, reshape the DRF
+  serializer / endpoint / response so it returns exactly what the
+  `full-version` mock returned (same field names, casing, nesting,
+  enums, pagination envelope, error format).
+- Treat `full-version`'s mock data and TypeScript types as the
+  **specification** for the matching DRF serializer. If a serializer
+  exists that does not match — adjust the serializer (rename fields,
+  add `SerializerMethodField`s, reshape nested objects) until it
+  matches the mock 1:1.
+- Use `to_representation` / serializer-level renaming / `source=`
+  arguments on Django side to align field names with the frontend
+  shape; do not rename in TypeScript.
+- Frontend-side adapters are a **last resort**, allowed only when the
+  desired shape is genuinely impossible on the backend (e.g. it would
+  break another stable consumer, or violate a Django invariant).
+  In that case document the reason in a code comment at the adapter.
+- New endpoints MUST be designed by first looking at the corresponding
+  `full-version` mock / TypeScript type and matching it exactly.
+- Update OpenAPI schema accordingly so generated types in
+  `src/lib/api/schema.ts` line up with the `full-version`-style types
+  the components already use.
+
+## Hard rules
+
+1. **Look at `full-version` first.** Before adding or changing
+   anything under `frontend/starter-kit/`, locate the corresponding
+   path in `frontend/full-version/` and use it as the source of truth
+   for structure, naming, props, and styling.
+2. **Mirror the folder layout.** Keep the same directory tree:
+   `src/@core/`, `src/@layouts/`, `src/@menu/`, `src/components/`,
+   `src/views/`, `src/app/`, `src/hooks/`, `src/libs/`, `src/utils/`,
+   `src/configs/`, `src/types/`, `src/data/`, etc. Do not invent new
+   top-level folders that do not exist in `full-version`.
+3. **Mirror file names and exports.** A component, hook, type,
+   constant, or page that exists in both projects MUST have the same
+   filename, default/named export, and public signature in
+   `starter-kit` as in `full-version`.
+4. **Mirror import paths and aliases.** Keep `tsconfig.json` path
+   aliases (`@/`, `@core/`, `@layouts/`, `@menu/`, `@views/`,
+   `@components/`, `@configs/`) and import styles aligned. Do not
+   change an alias in `starter-kit` without changing it in
+   `full-version` first.
+5. **Reuse, do not reinvent.** If `full-version` already implements
+   the component / hook / util you need, port it as-is (copy the file,
+   keep the same internals) instead of writing a new variant. Only
+   swap the data source from mock to Django (see "single intentional
+   difference" above).
+6. **Allowed divergence.** `starter-kit` is intentionally smaller —
+   missing features, demos, or locales are fine. When you must
+   diverge:
+   - Keep names and paths identical to `full-version`.
+   - Prefer omission over renaming.
+   - Add a short comment `// starter-kit: trimmed from full-version`
+     when a file is a reduced version of its `full-version` twin.
+7. **New features.** If a feature does not yet exist in either
+   project, design it in `starter-kit` using the same conventions
+   (folder placement, component shape, naming, styling, import
+   aliases) as comparable features in `full-version`.
+
+## Sanctioned exceptions (new / extended logic)
+
+The mirroring rules above apply to anything that already exists in
+`full-version`. They MUST NOT block legitimately new business logic.
+Divergence is **allowed and expected** when:
+
+- A new feature is required by SEOPartnerHub that has no counterpart
+  in `full-version` (e.g. SEO-specific dashboards, outreach pipelines,
+  partner workflows, role-based admin screens).
+- An existing `full-version` component is being **extended** with
+  additional fields, actions, columns, filters, statuses, or related
+  entities that the mock simply did not have.
+- The feature requires **new Django endpoints** (URLs, viewsets,
+  serializers, services, tasks) that do not exist in the
+  `full-version` mocks at all.
+- The feature requires **extra fields** on an existing endpoint /
+  serializer / type to support the SEOPartnerHub use case.
+
+In those cases:
+
+- Still mirror `full-version` conventions for naming, folder
+  placement, component composition, styling, import aliases, and
+  TypeScript patterns.
+- Place new files in the directory where `full-version` would have
+  placed them by analogy (e.g. a new dashboard view goes under
+  `src/views/<feature>/`, a new layout piece under `src/@layouts/`,
+  a new typed DTO under `src/types/`).
+- Extend types / DTOs additively. Prefer adding optional fields on
+  existing shapes over forking parallel types.
+- Reuse `full-version` primitive components (cards, tables, dialogs,
+  form controls) as building blocks; do not introduce a parallel UI
+  kit.
+- New Django endpoints MUST still follow the **frontend-first
+  contract direction** above: design the response shape from the
+  frontend's perspective (props, generated OpenAPI types) and then
+  shape the DRF serializer to match it.
+- Document the divergence briefly in code (`// new feature: <reason>`
+  or `// extends full-version <component>`) so future merges with
+  template updates are unambiguous.
+
+## Workflow checklist
+
+Before finishing a change under `frontend/starter-kit/`:
+
+- [ ] Checked the same path in `frontend/full-version/`.
+- [ ] File name, exports, props, and types match `full-version`
+      (or there is a documented reason they cannot).
+- [ ] Folder placement matches `full-version`.
+- [ ] Import aliases and paths match `full-version`.
+- [ ] No new top-level folders were introduced.
+- [ ] No renames of components, hooks, or utilities that exist in
+      `full-version`.
+- [ ] No mock data, `fake-db`, or fake API routes were copied over;
+      all dynamic data is fetched from the Django backend.
+- [ ] Django endpoint / serializer was reshaped (if needed) to return
+      the exact field names and structure that `full-version` mocks
+      used; no frontend-side adapter was added unless impossible on
+      the backend (with reason documented at the call site).
+- [ ] If the change is new / extended logic with no `full-version`
+      twin, the "Sanctioned exceptions" section above was followed:
+      naming, placement, aliases, and UI primitives mirror
+      `full-version`; new Django endpoints were still designed
+      frontend-first; divergence is documented in code.
+
+## Forbidden
+
+- Creating files in `frontend/starter-kit/` with names, locations, or
+  exports that differ from an existing twin in `frontend/full-version/`.
+- Introducing new path aliases, folder roots, or naming conventions in
+  `starter-kit` that are absent from `full-version`.
+- Rewriting a component from scratch when an equivalent exists in
+  `full-version` — port it instead.
+- Copying `src/fake-db/`, `src/data/*` fixtures used as runtime data,
+  or fake API route handlers from `full-version`. Use the Django
+  backend instead.
+- Renaming a field, changing casing, or restructuring a payload in
+  TypeScript to "make Django data fit" a `full-version` component.
+  Change the DRF serializer instead so the wire format matches the
+  `full-version` shape directly.

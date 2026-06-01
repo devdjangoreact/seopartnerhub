@@ -2,6 +2,10 @@ volumes:
   seopartnerhub_local_postgres_data: {}
   seopartnerhub_local_postgres_data_backups: {}
   seopartnerhub_local_redis_data: {}
+  seopartnerhub_frontend_starter_node_modules: {}
+  seopartnerhub_frontend_starter_next_cache: {}
+  seopartnerhub_frontend_full_node_modules: {}
+  seopartnerhub_frontend_full_next_cache: {}
 
 services:
   django: &django
@@ -21,7 +25,7 @@ services:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
     ports:
-      - '8000:8000'
+      - "8000:8000"
     command: /start
 
   postgres:
@@ -75,5 +79,51 @@ services:
     image: seopartnerhub_local_flower
     container_name: seopartnerhub_local_flower
     ports:
-      - '5555:5555'
+      - "5555:5555"
     command: /start-flower
+
+  # frontend_starter:
+  #   build:
+  #     context: .
+  #     dockerfile: ./compose/local/frontend/Dockerfile
+  #     args:
+  #       FRONTEND_DIR: frontend/starter-kit
+  #   image: seopartnerhub_local_frontend_starter
+  #   container_name: seopartnerhub_local_frontend_starter
+  #   depends_on:
+  #     - django
+  #   environment:
+  #     FRONTEND_DIR: frontend/starter-kit
+  #     NEXT_TELEMETRY_DISABLED: '1'
+  #     NEXT_PUBLIC_SITE_URL: http://localhost:3000
+  #     NEXT_PUBLIC_DJANGO_URL: http://localhost:8000
+  #     DJANGO_INTERNAL_URL: http://django:8000
+  #     WATCHPACK_POLLING: 'true'
+  #     CHOKIDAR_USEPOLLING: 'true'
+  #   volumes:
+  #     - ./frontend/starter-kit:/app/frontend/starter-kit:z
+  #     - seopartnerhub_frontend_starter_node_modules:/app/frontend/starter-kit/node_modules
+  #     - seopartnerhub_frontend_starter_next_cache:/app/frontend/starter-kit/.next
+  #   ports:
+  #     - '3000:3000'
+
+  # frontend_full:
+  #   build:
+  #     context: .
+  #     dockerfile: ./compose/local/frontend/Dockerfile
+  #     args:
+  #       FRONTEND_DIR: frontend/full-version
+  #   image: seopartnerhub_local_frontend_full
+  #   container_name: seopartnerhub_local_frontend_full
+  #   environment:
+  #     FRONTEND_DIR: frontend/full-version
+  #     NEXT_TELEMETRY_DISABLED: '1'
+  #     NEXT_PUBLIC_SITE_URL: http://localhost:3001
+  #     WATCHPACK_POLLING: 'true'
+  #     CHOKIDAR_USEPOLLING: 'true'
+  #   volumes:
+  #     - ./frontend/full-version:/app/frontend/full-version:z
+  #     - seopartnerhub_frontend_full_node_modules:/app/frontend/full-version/node_modules
+  #     - seopartnerhub_frontend_full_next_cache:/app/frontend/full-version/.next
+  #   ports:
+  #     - '3001:3000'

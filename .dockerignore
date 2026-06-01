@@ -12,3 +12,21 @@ venv
 .envs/
 .venv/
 **/__pycache__/
+
+# Node / frontend artefacts (frontend Docker image installs its own deps)
+**/node_modules/
+**/.next/
+**/.turbo/
+**/.cache/
+**/dist/
+**/build/
+**/coverage/
+**/*.log
+**/.eslintcache
+
+# Local-only files
+.vscode/
+.cursor/
+specs/
+.specify/
+

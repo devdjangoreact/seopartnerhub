@@ -23,6 +23,7 @@ import Button from '@mui/material/Button'
 
 // Hook Imports
 import { useSettings } from '@core/hooks/useSettings'
+import { useAuth } from '@/lib/auth/useAuth'
 
 // Styled component for badge content
 const BadgeContentSpan = styled('span')({
@@ -45,6 +46,7 @@ const UserDropdown = () => {
   const router = useRouter()
 
   const { settings } = useSettings()
+  const { user, logout } = useAuth()
 
   const handleDropdownOpen = () => {
     !open ? setOpen(true) : setOpen(false)
@@ -62,9 +64,9 @@ const UserDropdown = () => {
     setOpen(false)
   }
 
-  const handleUserLogout = async () => {
-    // Redirect to login page
-    router.push('/login')
+  const handleUserLogout = async (): Promise<void> => {
+    await logout()
+    router.replace('/login')
   }
 
   return (
@@ -78,7 +80,7 @@ const UserDropdown = () => {
       >
         <Avatar
           ref={anchorRef}
-          alt='John Doe'
+          alt={user?.display ?? 'User'}
           src='/images/avatars/1.png'
           onClick={handleDropdownOpen}
           className='cursor-pointer bs-[38px] is-[38px]'
@@ -90,7 +92,7 @@ const UserDropdown = () => {
         disablePortal
         placement='bottom-end'
         anchorEl={anchorRef.current}
-        className='min-is-[240px] !mbs-3 z-[1]'
+        className='min-is-[240px] mbs-3! z-1'
       >
         {({ TransitionProps, placement }) => (
           <Fade
@@ -103,12 +105,12 @@ const UserDropdown = () => {
               <ClickAwayListener onClickAway={e => handleDropdownClose(e as MouseEvent | TouchEvent)}>
                 <MenuList>
                   <div className='flex items-center plb-2 pli-6 gap-2' tabIndex={-1}>
-                    <Avatar alt='John Doe' src='/images/avatars/1.png' />
+                    <Avatar alt={user?.display ?? 'User'} src='/images/avatars/1.png' />
                     <div className='flex items-start flex-col'>
                       <Typography className='font-medium' color='text.primary'>
-                        John Doe
+                        {user?.display ?? 'User'}
                       </Typography>
-                      <Typography variant='caption'>admin@vuexy.com</Typography>
+                      <Typography variant='caption'>{user?.email ?? ''}</Typography>
                     </div>
                   </div>
                   <Divider className='mlb-1' />

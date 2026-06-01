@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+FRONTEND_DIR_DEFAULT="frontend/starter-kit"
+FRONTEND_DIR="${FRONTEND_DIR:-${FRONTEND_DIR_DEFAULT}}"
+FRONTEND_PATH="/app/${FRONTEND_DIR}"
+
+if [ ! -d "${FRONTEND_PATH}" ]; then
+    echo "[frontend] FRONTEND_DIR '${FRONTEND_DIR}' not mounted at ${FRONTEND_PATH}" >&2
+    exit 1
+fi
+
+cd "${FRONTEND_PATH}"
+
+# Non-interactive defaults for Docker (no TTY for approve-builds prompts).
+# Allow-list of build scripts that are allowed to run lives in each
+# frontend's `pnpm-workspace.yaml` under `allowBuilds`.
+export CI=true
+export npm_config_yes=true
+
+# Seed `.env.local` from `.env.example` on first start so the showcase boots
+# without a manual copy step. We only do this when `.env.local` is missing;
+# existing files are never overwritten.
+if [ -f .env.example ] && [ ! -f .env.local ]; then
+    echo "[frontend] seeding ${FRONTEND_DIR}/.env.local from .env.example"
+    cp .env.example .env.local
+fi
+
+if [ -f pnpm-lock.yaml ]; then
+    echo "[frontend] installing dependencies in ${FRONTEND_DIR} via pnpm (frozen lockfile)"
+    pnpm install --frozen-lockfile
+else
+    echo "[frontend] installing dependencies in ${FRONTEND_DIR} via pnpm (no lockfile)"
+    pnpm install --no-frozen-lockfile
+fi
+
+echo "[frontend] starting next dev on 0.0.0.0:3000 from ${FRONTEND_DIR}"
+exec pnpm dev --hostname 0.0.0.0 --port 3000

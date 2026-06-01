@@ -276,3 +276,22 @@ seopartnerhub/media/
 .env
 .envs/*
 !.envs/.local/
+
+# Next.js / frontend env files
+# - `.env.example` per frontend is committed (template, fake values).
+# - `.env.local`, `.env.*.local`, `.env.production*` are NEVER committed.
+frontend/**/.env
+frontend/**/.env.local
+frontend/**/.env.*.local
+frontend/**/.env.production
+frontend/**/.env.production.local
+!frontend/**/.env.example
+
+# Vuexy demo SQLite for the bundled NextAuth+Prisma showcase (full-version).
+frontend/full-version/dev.db
+frontend/full-version/dev.db-journal
+frontend/full-version/prisma/dev.db
+frontend/full-version/prisma/dev.db-journal
+frontend/full-version/src/prisma/dev.db
+frontend/full-version/src/prisma/dev.db-journal
+/lib/
