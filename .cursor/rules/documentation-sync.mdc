@@ -1,0 +1,53 @@
+---
+description: Always update project docs and Spec Kit artefacts after every change. Keep README, readme_start, readme_spec, constitution, specs, and .cursor/rules consistent with the codebase.
+alwaysApply: true
+---
+
+# Documentation sync rule
+
+Whenever you finish a code change, **before reporting to the user**,
+audit and update the project's documentation and Spec Kit artefacts so
+they stay in sync with the code.
+
+## Trigger
+
+Run this audit at the very end of any task that:
+
+- Adds, removes, renames, or moves files, modules, or Django apps.
+- Changes class names, model names, or DRF view names that appear in
+  docs.
+- Changes import paths, public APIs, or layer boundaries.
+- Adds, renames, or removes a Django settings key, env variable, Celery
+  task, or service class.
+- Changes run / install / lint / format / test commands, ports,
+  containers, or env files.
+
+## Files to keep in sync
+
+1. `README.md` — user-facing run / install instructions.
+2. `readme_start.md` — quick-start cheatsheet (URLs, commands).
+3. `readme_spec.md` — Spec Kit constitution + workflow.
+4. `.specify/memory/constitution.md` — must mirror the
+   `CONSTITUTION:BEGIN`/`END` block from `readme_spec.md`.
+5. `specs/<feature>/spec.md` and `plan.md` for the affected feature.
+6. `AGENTS.md` — paths table, architecture diagram, commands.
+7. `.cursor/rules/architecture.mdc` — layer diagram, allowed imports.
+8. `.cursor/rules/logging.mdc` — logger patterns.
+9. `.cursor/rules/context7-lookup.mdc` — library guidance.
+10. Any other `.cursor/rules/*.mdc` whose scope overlaps the change.
+
+## How to update
+
+- Search for stale paths and identifiers with `Grep` on the old names.
+  Fix every hit, including code blocks inside `.mdc` and `.md` files.
+- Mirror the new directory tree in the diagram and the path table.
+- Replace renamed identifiers in inline examples
+  (e.g. `from seopartnerhub.<app>.services.<x> import ...`).
+- Keep each rule under ~150 lines and focused on a single concern.
+
+## Forbidden
+
+- Leaving `README.md`, `readme_*.md`, `AGENTS.md`,
+  `.specify/memory/constitution.md`, or `.cursor/rules/*.mdc` referring
+  to deleted paths, classes, or import lines.
+- Reporting "done" while `Grep` still finds the old names in any doc.

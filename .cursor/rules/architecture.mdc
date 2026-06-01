@@ -1,0 +1,120 @@
+---
+description: Project architecture for SEOPartnerHub. Django 6 + DRF + Celery. Class-based, SOLID, layered apps.
+globs:
+  - "**/*.py"
+alwaysApply: true
+---
+
+# Architecture rules
+
+This is a **Python 3.14 / Django 6 / DRF / Celery** project on the
+Cookiecutter-Django layout. All code MUST follow the rules below.
+
+## 1. Project layout
+
+```
+config/                        # Django project (settings, urls, asgi, wsgi, celery_app)
+  settings/{base,local,production,test}.py
+seopartnerhub/                 # Django apps live here
+  <app>/
+    api/         # DRF views, serializers, urls
+    services/    # use cases, orchestration, transactions
+    selectors/   # read-only queries (no writes)
+    tasks/       # Celery tasks
+    integrations/ # adapters for external APIs / webhooks / n8n
+    models.py | models/
+    migrations/
+    tests/
+tests/                         # cross-app tests
+specs/                         # Spec Kit feature specs
+.specify/                      # Spec Kit infrastructure
+```
+
+## 2. OOP — services are classes
+
+- Business logic lives in **service classes** under
+  `seopartnerhub/<app>/services/`. Views, serializers, signals, and
+  model methods MUST NOT contain business logic.
+- Views translate HTTP ↔ services. Models hold data + invariants only.
+- **One public class per file.** Filename = class name in `snake_case`
+  (`class OutreachSender` → `outreach_sender.py`).
+- Prefer **composition** over inheritance. Inject collaborators through
+  `__init__`, not via module-level singletons or class-level state.
+- Data containers outside the ORM: `pydantic.BaseModel` with
+  `model_config = ConfigDict(frozen=True)`, or
+  `@dataclass(frozen=True, slots=True)`.
+
+## 3. SOLID
+
+- **S** — one class, one reason to change.
+- **O** — extend via new strategy classes, do not edit existing ones.
+- **L** — subclasses are drop-in replacements for their base.
+- **I** — many small abstractions (`typing.Protocol`), never one fat one.
+- **D** — depend on **abstractions** (`Protocol` / `ABC`), not on
+  concrete classes. Inject every collaborator through `__init__`.
+
+## 4. Layering (dependency direction)
+
+```
+api/  →  services/  →  selectors/ + models + integrations(protocol)
+                                  ↑
+                          tasks/  (Celery wrappers around services)
+```
+
+- `api/` MAY import `services/` and serializers; MUST NOT import
+  `tasks/` or `integrations/` directly.
+- `services/` MAY import `selectors/`, `models`, and integration
+  **protocols** (not concrete adapters); concrete adapters are injected
+  in `apps.py` / DI factory.
+- `selectors/` are read-only — no `.save()`, `.create()`, `.delete()`.
+- `tasks/` wrap services, add retry/backoff/idempotency; never contain
+  business logic of their own.
+
+## 5. Typing
+
+- `mypy` MUST pass (config in `pyproject.toml` with
+  `mypy_django_plugin` + `mypy_drf_plugin`).
+- **Never use `typing.Any`.** Use `object` + `isinstance`, generics,
+  `TypedDict`, `Protocol`, or proper unions.
+- Put `from __future__ import annotations` at the top of every module.
+- Public methods MUST have complete type hints on parameters and return.
+- `# type: ignore` requires a `# TODO` and a reason.
+
+## 6. Configuration — single source of truth
+
+- All runtime parameters live in `config/settings/{base,local,production,test}.py`,
+  read via `django-environ` from `./.envs/.local/*` and
+  `./.envs/.production/*`.
+- **No hardcoded env-dependent values** anywhere outside `config/`.
+- Adding a new parameter:
+  1. Add a typed read in the relevant `settings/*.py`.
+  2. Add the matching `KEY=value` line to `./.envs/.local/.django` (and
+     `.production/.django` if used in prod).
+  3. Read the value via `from django.conf import settings` or inject
+     through a service constructor. Never `os.environ` outside `config/`.
+
+## 7. Async & background work
+
+- HTTP-bound code uses Django views (sync by default; async views only
+  when there is a measurable benefit).
+- Anything longer than ~200 ms or touching a third-party API MUST be a
+  **Celery task**. Tasks MUST be **idempotent** and declare retry
+  policy: `autoretry_for=(Exception,)`, `retry_backoff=True`,
+  `max_retries=N`.
+- External integrations go through an adapter under
+  `seopartnerhub/<app>/integrations/` that implements a protocol
+  defined next to the service. The service depends on the protocol, not
+  on `requests` / `httpx` directly.
+
+## 8. Error handling
+
+- Prefer returning `Result | None` over raising for **expected**
+  business outcomes (e.g. "lead not found").
+- When you must raise, use a **static** message and pass dynamic data
+  separately (e.g. `logger.exception("static msg", extra={"id": x})`).
+- API errors MUST flow through a single DRF exception handler that
+  produces `{ "error": { "code": ..., "message": ... } }`.
+- Always log the **full** exception (`logger.exception(...)` or
+  `logger.error(..., exc_info=True)`). Never log only `str(error)` or
+  `error.message`.
+- Bare `except:` and `except Exception: pass` are forbidden.

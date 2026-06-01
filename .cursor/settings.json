@@ -1,0 +1,35 @@
+{
+  "$schema": "https://cursor.sh/schemas/project-settings.json",
+  "model": {
+    "default": "auto"
+  },
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Edit(seopartnerhub/**)",
+      "Edit(config/**)",
+      "Edit(tests/**)",
+      "Edit(specs/**)",
+      "Edit(.specify/**)",
+      "Edit(.cursor/**)",
+      "Edit(README.md)",
+      "Edit(readme_start.md)",
+      "Edit(readme_spec.md)",
+      "Edit(manage.py)",
+      "Shell(git status)",
+      "Shell(git diff*)",
+      "Shell(git log*)",
+      "Shell(git show*)",
+      "Shell(uv run *)",
+      "Shell(docker compose *)"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(.envs/**)",
+      "Edit(.env*)",
+      "Edit(.envs/**)"
+    ]
+  },
+  "hooks": ".cursor/hooks.json"
+}

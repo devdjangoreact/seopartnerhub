@@ -1,0 +1,76 @@
+---
+description: Use Django LOGGING + stdlib logging.getLogger(__name__). Forbid print() and ad-hoc logger configuration in application code.
+globs:
+  - "**/*.py"
+alwaysApply: true
+---
+
+# Logging rule
+
+This project uses Django's built-in `LOGGING` configuration in
+`config/settings/base.py` (with environment-specific overrides in
+`local.py` / `production.py`). All application logging goes through
+stdlib `logging`.
+
+## Hard rules
+
+1. **Never use `print()`** for diagnostics, status, debugging, or errors
+   in application code (`config/`, `seopartnerhub/`, Celery
+   `tasks/`, `management/commands/`). `print()` is allowed only for
+   genuine user-facing CLI output in admin scripts.
+2. **Always use a module-level logger**:
+
+   ```python
+   import logging
+
+   logger = logging.getLogger(__name__)
+   ```
+
+   Do NOT call `logging.basicConfig(...)`, `logging.config.dictConfig`,
+   or `logging.getLogger("custom-name")` outside of `config/settings/`.
+3. **Configuration happens once** in `config/settings/base.py` via the
+   `LOGGING = { ... }` dict. Adding a new logger / handler / formatter
+   MUST be a change to that dict, not an inline tweak elsewhere.
+
+## How to log
+
+- Use **static messages** with structured context via `extra=`:
+
+  ```python
+  logger.info("outreach_sent", extra={"lead_id": lead.id, "channel": ch})
+  ```
+
+  Static messages make log aggregation, alerting, and search work.
+- **Never use f-strings** for log messages — they break log
+  aggregation and force eager string interpolation even when the log
+  level is disabled.
+- Inside every `except` block use `logger.exception(...)`:
+
+  ```python
+  except OutreachError:
+      logger.exception("outreach_failed", extra={"lead_id": lead.id})
+      raise
+  ```
+
+  This automatically includes the full traceback. Never log only
+  `str(error)` or `error.message`.
+
+## Required logging points
+
+- Celery task lifecycle: start, success, failure, retry.
+- Every `except Exception:` block — `logger.exception(...)`.
+- External API call: request id, endpoint, status, duration.
+- Webhook receipt: source, event type, validation result.
+- Auth events: login, logout, password change, MFA failure.
+- Permission denials in DRF / Django views.
+- Retry / backoff loop iterations at `debug` level.
+
+## Forbidden patterns
+
+| Bad                                          | Good                                                         |
+| -------------------------------------------- | ------------------------------------------------------------ |
+| `print(f"connected to {svc}")`               | `logger.info("connected", extra={"svc": svc})`               |
+| `logger.error(str(e))`                       | `logger.exception("static_msg", extra={"ctx": x})`           |
+| `logger.info(f"x={x}")`                      | `logger.info("static_event", extra={"x": x})`                |
+| `logging.basicConfig(level=...)` in app code | configure in `config/settings/base.py`                       |
+| `logging.getLogger("my-app")`                | `logging.getLogger(__name__)`                                |

@@ -1,0 +1,6 @@
+{
+  "$comment": "Personal overrides. Gitignored. Safe to put personal prefs here.",
+  "model": {
+    "default": "auto"
+  }
+}

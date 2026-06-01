@@ -1,0 +1,38 @@
+﻿# Files Cursor must skip when building context
+
+# Build artefacts
+node_modules/
+dist/
+build/
+.next/
+coverage/
+htmlcov/
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+__pycache__/
+*.pyc
+*.pyo
+staticfiles/
+media/
+*.log
+
+# Secrets - never read
+.env
+.env.*
+.envs/
+
+# Large binaries
+*.zip
+*.tar.gz
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.pdf
+
+# Lockfiles (read only when explicitly requested)
+uv.lock
+poetry.lock
