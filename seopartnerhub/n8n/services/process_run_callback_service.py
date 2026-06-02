@@ -10,8 +10,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from seopartnerhub.n8n.models import ProcessRun
-from seopartnerhub.n8n.models import RunStatus
+from seopartnerhub.n8n.models import ProcessRun, RunStatus
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +99,7 @@ class ProcessRunCallbackService:
 
         run.status = status
         run.result_json = result if isinstance(result, dict) else None
-        run.error_message = error_message if status == RunStatus.FAILED.value else None
+        run.error_message = error_message if status == RunStatus.FAILED.value else ""
         run.finished_at = timezone.now()
         run.save(
             update_fields=[

@@ -277,6 +277,9 @@ seopartnerhub/media/
 .envs/*
 !.envs/.local/
 
+# Cursor MCP config — contains API keys (n8n etc.); each dev keeps own copy.
+.cursor/mcp.json
+
 # Next.js / frontend env files
 # - `.env.example` per frontend is committed (template, fake values).
 # - `.env.local`, `.env.*.local`, `.env.production*` are NEVER committed.
